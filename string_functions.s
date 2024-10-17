@@ -2,9 +2,9 @@
 #
 #  KURS: 1DT093 2024.  Computer Architecture
 #	
-# DATUM: 12-10-2024
+#  DATUM: 17-10-2024
 #
-#  NAMN: Ahmed Radwan
+#  NAMN: Ahmed  Radwan
 #
 ##############################################################################
 
@@ -44,26 +44,19 @@ for_all_in_array:
 
 	#### Append a MIPS-instruktion before each of these comments
 	
-	# Done if i == N
-	beq	$t0, $a1, end_for_all	# If i == N, exit the loop
+	beq $t0,$a1,end_for_all #if index is 10 we jump to end for all calle
 	
-	# 4*i
-	sll	$t1, $t0, 2		# Multiply i by 4 (shift left by 2) to get byte offset for the current index that we want to get its value
+	sll $t1,$t0,2 #to temporary index t1 we save the array index with offset 4
 	
-	# address = ARRAY + 4*i
-	add	$t2, $a0, $t1		# Calculate the address of the current index 
+	add $t2,$a0,$t1 # adds the offset to the adress of the current integer in the array, storing in t2
 	
-	# n = A[i]
-	lw	$t3, 0($t2)		# Load the value at address A[i] into $t3
-
-       	# Sum = Sum + n
-       	add	$v0, $v0, $t3		# Add the value of A[i] to sum
-
+	lw $t3,0($t2) #load word, loads what's stored at t2 with offset 0 into t3 (an integer from our array)
+       	
+       	add $v0,$v0,$t3 #adds our integer in t3 to the sum v0 and stores/overwrites v0
         # i++ 
-        addi	$t0, $t0, 1		# Increment index i
-        
+        addi $t0,$t0,1 #increments the index by 1
   	# next element
-  	j	for_all_in_array	# Jump back to the start of the loop
+  	j for_all_in_array #loops back
 	
 end_for_all:
 	
@@ -81,32 +74,23 @@ end_for_all:
 #
 ##############################################################################	
 string_length:
+	#la $a0,STR_str #loading the adress of hunde katten glassen into a0
+	#### Write your solution here ####
+	addi $v0, $zero,0 #initializes the length of the string to 0
+	add $t0,$zero,$a0 # here we add the adress of our string to t0
+	
+for_character_in_str:	
+	lb $t1,0($t0) #load byte stored at t0 into t1
+	 
+	beq $t1,$zero,end_for_str #is the byte in question the NULL byte, if yes then we jump to end_for_str
+	
+	addi $v0,$v0,1 #increment the length counter by 1
+	
+	addi $t0,$t0,1 # Increments the adress by 1 byte, aka we go to the next letter
+	j for_character_in_str #loops back 
 
-	# Initialize the length counter to 0
-	addi    $v0, $zero, 0           # Initialize length to 0
-	
-	# Initialize the address pointer
-	add	$t0, $zero, $a0	        # Set $t0 to the starting address of the string
-	
-for_characters_in_str:
-
-	# Load the byte at the current address
-	lb	$t1, 0($t0)	        # Load the byte (character) at address $t0 into $t1 because it's not a word, it's a byte
-	
-	# Check if the byte is the NULL terminator
-	beq	$t1, $zero, end_for_str	# If it's NULL (0x00), exit the loop
-	
-	# Increment the length counter
-	addi	$v0, $v0, 1	        # Increment the length
-	
-	# Move to the next byte (next character in the string)
-	addi	$t0, $t0, 1	        # Increment the pointer to the next byte by adding 1 not 4!
-	
-	# Repeat the loop for the next character
-	j	for_characters_in_str	# Jump back to the start of the loop
-	
 end_for_str:
-	jr	$ra		        # Return to the caller
+	jr	$ra
 	
 ##############################################################################
 #
@@ -122,41 +106,32 @@ end_for_str:
 #
 ##############################################################################	
 string_for_each:
-    addi    $sp, $sp, -12       # Reserve space on the stack for return address, $s0, and $s1
-    sw      $ra, 8($sp)         # Save return address
-    sw      $s0, 4($sp)         # Save $s0 (for string pointer)
-    sw      $s1, 0($sp)         # Save $s1 (for callback address)
+    addi    $sp, $sp, -12       #reserve space on the stack
+    sw      $ra, 8($sp)         #save return address
+    sw      $s0, 4($sp)         #save $s0 for string pointer
+    sw      $s1, 0($sp)         #save $s1 for callback addres
 
-	#### Write your solution here ####
-	### Hint: Since you're calling another function, do you need to store 
-	### some registers somewhere, read more about caller saved and callee 
-	### saved registers in the MIPS calling conventions.
-
-	### Hint: If you store to a callee saved register, do you need to 
-	### store the previous value to restore the old value for your caller?
-	
-    move    $s0, $a0            # Copy the address of the string into $s0 for pointer traversal
-    move    $s1, $a1            # Store the callback address in $s1
+    move    $s0, $a0            #copy the address of the string into $s0 for pointer traversal
+    move    $s1, $a1            #store the callback address in $s1
 
 loop_start:
-    lb      $t0, 0($s0)         # Load the current character (byte) from the string into $t0
-    beqz    $t0, loop_end       # If the character is NUL (end of string), exit loop
+    lb      $t0, 0($s0)         #load byte (the character) from adress s0 into t0
+    beqz    $t0, loop_end       #If the character is NULL, exit loop
 
     # Call the callback with the address of the current character
-    move    $a0, $s0            # Move the address of the current character to $a0
-    jalr    $s1                 # Jump to the callback subroutine
+    move    $a0, $s0            #Move the address of the current character to $a0
+    jalr    $s1                 #Jump to the callback subroutine
 
-    # Advance to the next character
-    addi    $s0, $s0, 1         # Move to the next character (increment pointer)
-    j       loop_start          # Repeat for the next character
+    # next character
+    addi    $s0, $s0, 1         #moving tto the next char by incrementing the pointer by 1
+    j       loop_start          #Keep loopin
 
 loop_end:
-    lw      $s1, 0($sp)         # Restore $s1
-    lw      $s0, 4($sp)         # Restore $s0
-    lw      $ra, 8($sp)         # Restore return address
-    addi    $sp, $sp, 12        # Restore stack pointer
-    jr      $ra                 # Return to caller
-	
+    lw      $s1, 0($sp)         #Restore $s1
+    lw      $s0, 4($sp)         #Restore $s0
+    lw      $ra, 8($sp)         #Restore return address
+    addi    $sp, $sp, 12        #Restore stack pointer
+    jr      $ra                 #Return to caller
 
 ##############################################################################
 #
@@ -166,72 +141,75 @@ loop_end:
 #
 ##############################################################################		
 to_upper:
-    lb      $t0, 0($a0)         # Load the byte (character) from the address in $a0
 
-    # Check if the character is lowercase (between 'a' and 'z')
-    li      $t1, 'a'            # Load ASCII value of 'a' (97)
-    li      $t2, 'z'            # Load ASCII value of 'z' (122)
-    
-    blt     $t0, $t1, end_to_upper    # If char < 'a', it's not lowercase, so skip
-    bgt     $t0, $t2, end_to_upper    # If char > 'z', it's not lowercase, so skip
+	#### Write your solution here ####
 
-    # Convert to uppercase by clearing the 6th bit (subtracting 32)
-    andi    $t0, $t0, 0xDF      # Clear the 6th bit (0xDF = 11011111 in binary)
+    	lb      $t0, 0($a0)         #Loads the byte stored at adress a0 and putting it in t0
 
-    # Store the modified character back to the same address
-    sb      $t0, 0($a0)
+    	# Check if the character is lowercase (between 'a' and 'z')
+    	li      $t1, 'a'            #Load Immediate of 'a' into t1 (97) ASCII
+    	li      $t2, 'z'            #Load Immediate of 'z' into t2 (122)
+	#This checks if t0 is smaller than a or greater than z (if true then it's already uppercase)
+    	blt     $t0, $t1, end_to_upper    #If t0 is less than t1, end loop
+    	bgt     $t0, $t2, end_to_upper    #If t0 greater than t2, end loop 
+
+    	#Converting to upper by clearing the 6th bit (subtracting 32)
+    	andi    $t0, $t0, 0xDF      #Clear the 6th bit (0xDF = 11011111 in binary) thus changing to uppercase
+
+    	#Store the modified character back to the same address
+    	sb      $t0, 0($a0) #Storing uppercase letter ($t0) back into same spot (adress $a0)
 
 end_to_upper:
-    jr      $ra                 # Return to caller
-
-
+    	jr      $ra                 # Return to caller
+    	
 ##############################################################################
 #
-# DESCRIPTION: Reverses a string in place.
-#
-#       INPUT: $a0 - address to a NUL terminated string.
-#
-#      OUTPUT: The string at the input address is reversed in place.
+#  DESCRIPTION: Reverses a string.
+#	
+#        INPUT: $a0 - address of a character 
 #
 ##############################################################################
 reverse_string:
-    addi    $sp, $sp, -16       # Allocate stack space for 4 words
-    sw      $ra, 12($sp)        # Save return address
-    sw      $s0, 8($sp)         # Save $s0 (will be used for string start)
-    sw      $s1, 4($sp)         # Save $s1 (will be used for string end)
-    sw      $s2, 0($sp)         # Save $s2 (will be used for string length)
+    addi    $sp, $sp, -16       #allocate stack space
+    sw      $ra, 12($sp)        #saving return address on the stack
+    sw      $s0, 8($sp)         #saving $s0 (string start)
+    sw      $s1, 4($sp)         #saving $s1 (string end)
+    sw      $s2, 0($sp)         #saving $s2 (length of the string)
 
-    move    $s0, $a0            # Save string start address (pointer to the start of the string)
+    move    $s0, $a0            # we save the character adress to $s0
 
-    # Call string_length to get the length of the string
-    jal     string_length
-    move    $s2, $v0            # Save string length (in $s2)
+    # Calling string_length to get the length of the string
+    jal     string_length 	#uses string length to calculate length of string, returns v0
+    move    $s2, $v0            #save string length v0 (in $s2)
 
-    add     $s1, $s0, $s2       # Calculate the end address (start + length)
-    addi    $s1, $s1, -1        # Adjust to point to the last character
+    add     $s1, $s0, $s2       #calculate the end address (start + length) into s1 so ex 0 + 32 = 32
+    addi    $s1, $s1, -1        #adjust to point to the last character and not next one
 
 swap_loop:
-    bge     $s0, $s1, end_reverse  # If start >= end, we're done
+    bge     $s0, $s1, end_reverse  #Branch if greater or equal to each other the start and end pointers, end the reverse loop
 
     # Swap characters
-    lb      $t0, 0($s0)         # Load character from start
-    lb      $t1, 0($s1)         # Load character from end
-    sb      $t1, 0($s0)         # Store end character at start
-    sb      $t0, 0($s1)         # Store start character at end
+    lb      $t0, 0($s0)         #load character from start (adress s0)
+    lb      $t1, 0($s1)         #load character from end (adress s1)
+    sb      $t1, 0($s0)         #store end $t1 into start $s0
+    sb      $t0, 0($s1)         #store start $t0 into end $s1
 
     # Move pointers closer to the center
-    addi    $s0, $s0, 1         # Increment start pointer
-    addi    $s1, $s1, -1        # Decrement end pointer
+    addi    $s0, $s0, 1         #increments the start pointer by 1
+    addi    $s1, $s1, -1        #decrements end pointer by 1
 
-    j       swap_loop           # Continue swapping
+    j       swap_loop           #Continue swap
 
 end_reverse:
-    lw      $s2, 0($sp)         # Restore $s2
-    lw      $s1, 4($sp)         # Restore $s1
-    lw      $s0, 8($sp)         # Restore $s0
-    lw      $ra, 12($sp)        # Restore return address
-    addi    $sp, $sp, 16        # Deallocate stack space
-    jr      $ra                 # Return to caller
+    lw      $s2, 0($sp)         #restore $s2
+    lw      $s1, 4($sp)         #restore $s1
+    lw      $s0, 8($sp)         #restore $s0
+    lw      $ra, 12($sp)        #restore return address
+    addi    $sp, $sp, 16        #deallocate stack space
+    jr      $ra                 #Return
+
+
+
 
 ##############################################################################
 #
@@ -256,10 +234,13 @@ STR_for_each_ascii:
 
 STR_for_each_to_upper:
 	.asciiz "\n\nstring_for_each(str, to_upper)\n\n"	
+
+	#.text
+	#.globl main
 	
 STR_reverse_string:
-	.asciiz "\n\nReversed string:\n\n"
-	
+	.asciiz "\n\nreverse_string(str,ascii)\n\n"	
+
 	.text
 	.globl main
 
@@ -349,27 +330,28 @@ main:
 	
 	lw	$ra, 0($sp)	# POP return address
 	addi	$sp, $sp, 4
-
-	
-	#jr	$ra
 	
 	##
 	### reverse_string
 	##
-
-    	li      $v0, 4              # syscall for print string
+	#la	$a0, STR_str
+	#jal reverse_string
+	
+	li      $v0, 4              # syscall for print string
     	la      $a0, STR_reverse_string  # load address of the message
     	syscall                      # print the message
 
 
-	la      $a0, STR_str          # Load address of the string to reverse
-	jal     reverse_string        # Call reverse_string
+    	la      $a0, STR_str          # Load address of the string to reverse
+    	jal     reverse_string        # Call reverse_string
 
-	jal     print_test_string     # Print the reversed string
+    	jal     print_test_string     # Print the reversed string
+	
+	li	$v0, 10		# Exit syscall
+	syscall			# End execution
+	
+	#jr	$ra
 
-    	li      $v0, 10             # exit syscall
-   	syscall
-    
 ##############################################################################
 #
 #  DESCRIPTION : Prints out 'str = ' followed by the input string surronded
